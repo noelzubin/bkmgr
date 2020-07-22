@@ -1,4 +1,4 @@
-use rusqlite::{ Connection, params, OptionalExtension };
+use rusqlite::{ Connection, params, OptionalExtension, ToSql };
 use dirs; 
 use std::path::Path;
 use ini::Ini;
@@ -50,20 +50,33 @@ impl DB {
     }
 
     pub fn get_all_bookmark(&self) -> Vec<Bookmark> {
-        let query = "SELECT * FROM bookmarks";
+        let query = "
+            select b.*, group_concat(t.name) from bookmarks b
+            left join bookmark_tag bt on bt.bookmark_id = b.id
+            left join tags t on t.id = bt.tag_id
+            group by b.id;
+        ";
         self.vectorize_bookmarks(query)
     }
 
+    
+
     pub fn get_bookmark_by_id(&self, id: i64) -> Option<Bookmark> {
-        let query = "SELECT * FROM bookmarks WHERE id=?";
+        let query = "
+            select b.*, group_concat(t.name) from bookmarks b
+            left join bookmark_tag bt on bt.bookmark_id = b.id
+            left join tags t on t.id = bt.tag_id
+            where b.id = ?
+            group by b.id;
+        ";
 
         match self.conn.query_row(query, &[&id], |r| {
-            Ok(Bookmark {
-                id: r.get(0).unwrap(),
-                title: r.get(1).unwrap(),
-                url: r.get(2).unwrap(),
-                tags: self.get_tags(r.get(0).unwrap()).unwrap()
-            })
+            Ok(Bookmark::new(
+                r.get(0).unwrap(),
+                r.get(1).unwrap(),
+                r.get(2).unwrap(),
+                r.get::<_, String>(3).unwrap().split(",").map(String::from).collect(),
+            ))
         }) {
             Ok(b) => Some(b),
             Err(_) => None
@@ -164,34 +177,55 @@ impl DB {
 
     pub fn search(&self, keywords: Vec<String>) -> Vec<Bookmark> {
         let query = format!(
-            "SELECT * FROM bookmarks WHERE (title || url) LIKE \"%{}%\"",
+            "SELECT id FROM bookmarks WHERE (title || url) LIKE \"%{}%\"",
             keywords.join("%")
         );
 
-        self.vectorize_bookmarks(query.as_str())
+        self.vectorize_ids(query.as_str(), params![])
+            .into_iter()
+            .map(|id| self.get_bookmark_by_id(id).unwrap())
+            .collect()
     }
+
 
     pub fn search_by_tag(&self, keywords: Vec<&str>) -> Vec<Bookmark> {
         let query = format!(
-            "select b.id, b.title, b.url from bookmark_tag bt
+            "select b.id from bookmark_tag bt
             inner join bookmarks b on b.id = bt.bookmark_id
             inner join tags t on t.id = bt.tag_id
             where t.name like \"%{}%\"", keywords.join("%")
         );
 
-        self.vectorize_bookmarks(query.as_str())
+        self.vectorize_ids(&query, params![])
+            .into_iter()
+            .map(|id| self.get_bookmark_by_id(id).unwrap())
+            .collect()
+    }
+
+    fn vectorize_ids<P>(&self, query: &str, params: P) -> Vec<i64> 
+        where
+            P: IntoIterator,
+            P::Item: ToSql 
+    {
+        let mut stmt = self.conn.prepare(query).unwrap();
+        stmt.query_map(params, |r| r.get(0) )
+        .unwrap().map(|r| r.unwrap()).collect()
     }
 
     fn vectorize_bookmarks(&self, query: &str) -> Vec<Bookmark> {
         let mut stmt = self.conn.prepare(query).unwrap();
 
         let bookmark_iter = stmt.query_map(params![], |r| {
-            Ok(Bookmark {
-                id: r.get(0).unwrap(),
-                title: r.get(1).unwrap(),
-                url: r.get(2).unwrap(),
-                tags: self.get_tags(r.get(0).unwrap()).unwrap(),
-            })
+            let tags = match r.get::<_, String>(3) {
+                Ok(tags) => tags.split(",").map(String::from).collect(),
+                Err(_) => Vec::new(),
+            };
+            Ok(Bookmark::new(
+                r.get(0).unwrap(),
+                r.get(1).unwrap(),
+                r.get(2).unwrap(),
+                tags,
+            ))
         }).unwrap();
 
         let mut bookmarks: Vec<Bookmark> = Vec::new();

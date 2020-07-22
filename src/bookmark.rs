@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(Debug)]
 pub struct Bookmark {
     pub id: i64,
     pub url: String,

@@ -1,6 +1,6 @@
 use crate::db::DB;
 
-pub fn execute(ids: Vec<i64>, tags: Option<Vec<String>>) {
+pub fn execute(ids: Vec<i64>, _tags: Option<Vec<String>>) {
     let db = DB::open();
 
     // ids are set
