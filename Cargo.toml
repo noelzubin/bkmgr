@@ -1,0 +1,16 @@
+[package]
+name = "bkmgr"
+version = "0.1.0"
+authors = ["noelzubin"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = { version = "0.10.6", features = ["blocking"] }
+structopt = "0.3.15"
+rusqlite = "0.23.1"
+dirs = "3.0.1"
+rust-ini = "0.15.3"
+select = "0.5.0"
+webbrowser = "0.5.4"
