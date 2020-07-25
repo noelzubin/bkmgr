@@ -13,7 +13,7 @@ use tui::{
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Table, Row},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Table, Row, TableState},
     Terminal,
 };
 use crate::cmd::search;
@@ -22,14 +22,7 @@ pub struct App {
   input: String,
   bookmarks: Vec<Bookmark>,
   event_publisher: mpsc::Sender<Event<Key>>,
-  focused: Window,
-}
-
-enum Window {
-  Search,
-  List,
-  Command,
-  None,
+  table_state: TableState,
 }
 
 impl App {
@@ -38,7 +31,7 @@ impl App {
       input: String::new(),
       bookmarks: Vec::new(),
       event_publisher,
-      focused: Window::Search,
+      table_state: TableState::default(),
     }
   }
 
@@ -71,7 +64,7 @@ pub fn execute() -> Result<(), io::Error>{
 
   loop {
     terminal.draw(|f| {
-      let app = app.lock().unwrap();
+      let mut app = app.lock().unwrap();
       let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(0)
@@ -79,15 +72,13 @@ pub fn execute() -> Result<(), io::Error>{
             [
                 Constraint::Length(3),
                 Constraint::Min(1),
-                Constraint::Length(1),
             ]
             .as_ref(),
         )
         .split(f.size());
 
         ui::draw_input(f, &app, chunks[0]);
-        ui::draw_list(f, &app, chunks[1]);
-        ui::draw_commandline(f, &app, chunks[2]);
+        ui::draw_list(f, &mut app, chunks[1]);
 
         f.set_cursor(
           chunks[0].x + app.input.len() as u16 + 1,
@@ -102,22 +93,51 @@ pub fn execute() -> Result<(), io::Error>{
       match events.next().unwrap() {
         Event::Input(input) => {
           match input {
-            Key::Char('q') => break,
+            Key::Up => {
+              match app.table_state.selected() {
+                None => {
+                  if app.bookmarks.len() > 0 {
+                    let new_ind = app.bookmarks.len() - 1;
+                    app.table_state.select(Some(new_ind))
+                  }
+                },
+                Some(i) => {
+                  let new_ind = if i == 0 { app.bookmarks.len() -1 } else { i - 1 };
+                  app.table_state.select(Some(new_ind))
+                },
+              }
+            },
+            Key::Down => {
+              match app.table_state.selected() {
+                None => {
+                  if app.bookmarks.len() > 0 {
+                    app.table_state.select(Some(0))
+                  }
+                },
+                Some(i) => {
+                  let new_ind = (i + 1) % app.bookmarks.len();
+                  app.table_state.select(Some(new_ind));
+                },
+              }
+            },
             Key::Char(c) => { 
               app.input.push(c);
               app.search();
-            }
-            Key::Backspace => { app.input.pop(); },
-            _ => {}
+            },
+            Key::Backspace => {
+              app.input.pop();
+              app.search();
+            },
+            Key::Ctrl('c') => { break },
+            _ => {},
           }
         },
         Event::DB(event::DB::Bookmarks(bookmarks)) => {
+          app.table_state.select(None);
           app.bookmarks = bookmarks;
         }
         _ => {}
       }
-
-
     }
   };
 
