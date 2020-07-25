@@ -3,4 +3,4 @@ pub mod delete;
 pub mod list;
 pub mod search;
 pub mod open;
-pub mod test;
+pub mod prompt;

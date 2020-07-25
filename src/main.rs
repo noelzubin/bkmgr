@@ -1,4 +1,5 @@
 use structopt::StructOpt;
+use log::LevelFilter;
 
 mod db;
 mod bookmark;
@@ -24,10 +25,12 @@ enum Opt {
     },
     Open { id: Vec<i64> },
     Search { keywords: Vec<String> },
-    Test,
+    Prompt,
 }
 
 fn main() {
+    simple_logging::log_to_file("debug.log", LevelFilter::Info);
+
     let opts = Opt::from_args();
     match opts {
         Opt::Add { url, tags } => cmd::add::execute(url, tags),
@@ -35,7 +38,7 @@ fn main() {
         Opt::List { id, tags} => cmd::list::execute(id, tags),
         Opt::Search { keywords} => cmd::search::execute(keywords),
         Opt::Open { id } => cmd::open::execute(id),
-        Opt::Test => cmd::test::execute(),
+        Opt::Prompt => cmd::prompt::execute().unwrap(),
         _ => {},
     }
 }

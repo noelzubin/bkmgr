@@ -12,6 +12,10 @@ impl Bookmark {
     pub fn new(id: i64, title: String, url: String, tags: Vec<String>) -> Self {
         Bookmark { id, title, url, tags }
     }
+
+    pub fn row(&self) -> Vec<&str> {
+        vec![&self.title, &self.title, &self.url] 
+    }
 }
 
 impl fmt::Display for Bookmark {

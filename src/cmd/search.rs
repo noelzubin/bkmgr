@@ -1,9 +1,8 @@
 use crate::db::DB;
+use crate::bookmark::Bookmark;
 
 pub fn execute(keywords: Vec<String>) {
-    let db = DB::open();
-
-    let bookmarks = db.search(keywords);
+    let bookmarks = search(keywords);
 
     if bookmarks.len() == 0 {
         println!("Error: No matching any bookmark");
@@ -13,4 +12,8 @@ pub fn execute(keywords: Vec<String>) {
     for bookmark in bookmarks {
         println!("{}", bookmark);
     }
+}
+
+pub fn search(keywords: Vec<String>) -> Vec<Bookmark>{ 
+    DB::open().search(keywords)
 }
