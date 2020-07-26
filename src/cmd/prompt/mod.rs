@@ -128,6 +128,12 @@ pub fn execute() -> Result<(), io::Error>{
               app.input.pop();
               app.search();
             },
+            Key::Ctrl('o') => {
+              if let Some(i) = app.table_state.selected() {
+                let url = &app.bookmarks.get(i).unwrap().url;
+                webbrowser::open(&url).unwrap();
+              }
+            },
             Key::Ctrl('c') => { break },
             _ => {},
           }
