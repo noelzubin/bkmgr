@@ -43,6 +43,10 @@ impl App {
       tx.send(Event::DB(event::DB::Bookmarks(bookmarks)))
     });
   }
+
+  fn init(&mut self) {
+    self.search();
+  }
 }
 
 pub fn execute() -> Result<(), io::Error>{
@@ -60,7 +64,9 @@ pub fn execute() -> Result<(), io::Error>{
   let mut events = Events::new(tx.clone(), rx);
 
   // Create default app state
-  let mut app = Arc::new(Mutex::new(App::new(tx)));
+  let mut app = App::new(tx);
+  app.init();
+  let mut app = Arc::new(Mutex::new(app));
 
   loop {
     terminal.draw(|f| {

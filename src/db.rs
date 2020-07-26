@@ -177,7 +177,7 @@ impl DB {
 
     pub fn search(&self, keywords: Vec<String>) -> Vec<Bookmark> {
         let query = format!(
-            "SELECT id FROM bookmarks WHERE (title || url) LIKE \"%{}%\"",
+            "SELECT id FROM bookmarks WHERE (title || url) LIKE \"%{}%\" ORDER BY id DESC",
             keywords.join("%")
         );
 
