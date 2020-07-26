@@ -75,7 +75,7 @@ impl DB {
                 r.get(0).unwrap(),
                 r.get(1).unwrap(),
                 r.get(2).unwrap(),
-                r.get::<_, String>(3).unwrap().split(",").map(String::from).collect(),
+                r.get::<_, String>(3).map_or(Vec::new(), |r| r.split(",").map(String::from).collect()),
             ))
         }) {
             Ok(b) => Some(b),
