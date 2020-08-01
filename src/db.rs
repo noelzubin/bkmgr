@@ -137,18 +137,6 @@ impl DB {
         };
     }
 
-    pub fn delete_bookmark_tag_by_id(&self, id: i64) {
-        let query = "DELETE FROM bookmark_tag WHERE bookmark_id=?";
-        self.conn.execute(query, &[&id]).unwrap();
-    }
-
-    pub fn delete_tag(&self, name: &str) {
-        self.delete_bookmark_tag_by_name(name);
-
-        let query = "DELETE FROM tags WHERE name=?";
-        self.conn.execute(query, &[&name]).unwrap();
-    }
-
     fn delete_bookmark_tag_by_name(&self, name: &str) {
         let query = "DELETE FROM bookmark_tag WHERE tag_id IN (SELECT id FROM tags WHERE name=?)";
         self.conn.execute(query, &[&name]).unwrap();

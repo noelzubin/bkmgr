@@ -1,16 +1,10 @@
 use crate::cmd::prompt::App;
-use std::slice::Iter;
-use std::iter::Map;
-use std::fmt::Display;
 use tui::{
   Frame,
-  backend::TermionBackend,
   backend::Backend,
-  layout::{Constraint, Direction, Layout, Rect, Alignment},
+  layout::{Constraint, Rect },
   style::{Color, Modifier, Style},
-  text::{Span, Spans, Text},
-  widgets::{Block, Borders, List, ListItem, Paragraph, Table, Row, Widget, Wrap, TableState },
-  Terminal,
+  widgets::{Block, Borders, Paragraph, Table, Row },
 };
 
 pub fn draw_input<B: Backend>(f: &mut Frame<B>, app: &App, chunk: Rect) {
@@ -23,7 +17,7 @@ pub fn draw_input<B: Backend>(f: &mut Frame<B>, app: &App, chunk: Rect) {
 
 pub fn draw_list<B: Backend>(f: &mut Frame<B>, app: &mut App, chunk: Rect) {
   let bookmarks: Vec<Vec<String>> = app.bookmarks.iter().map(|bm|{
-    vec![bm.title.clone(), bm.url.clone(), bm.tags.join(", ").clone()] 
+    vec![bm.id.to_string(), bm.title.clone(), bm.url.clone(), bm.tags.join(", ").clone()] 
   }).collect();
 
 
@@ -33,7 +27,7 @@ pub fn draw_list<B: Backend>(f: &mut Frame<B>, app: &mut App, chunk: Rect) {
   let row_style = Style::default().fg(Color::White);
 
   let list = Table::new(
-        ["Title", "Url", "Tags"].iter(),
+        ["Id", "Title", "Url", "Tags"].iter(),
         bookmarks.iter()
           .map(|bm| Row::StyledData(bm.iter(), row_style))
     )
@@ -41,7 +35,7 @@ pub fn draw_list<B: Backend>(f: &mut Frame<B>, app: &mut App, chunk: Rect) {
     .header_style(Style::default().fg(Color::Yellow))
     .highlight_style(selected_style)
     .highlight_symbol("> ")
-    .widths(&[Constraint::Percentage(35), Constraint::Percentage(40), Constraint::Percentage(25)]);
+    .widths(&[Constraint::Length(3), Constraint::Percentage(35), Constraint::Percentage(35), Constraint::Percentage(25)]);
     // .style(Style::default().fg(Color::White))
     // .column_spacing(1);
   

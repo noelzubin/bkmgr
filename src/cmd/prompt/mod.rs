@@ -1,8 +1,7 @@
 mod event;
 mod ui;
 
-use std::{error::Error, io};
-use log::{info};
+use std::io;
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 use event::{Event, Events};
@@ -11,9 +10,7 @@ use crate::bookmark::Bookmark;
 use tui::{
     backend::TermionBackend,
     layout::{Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
-    text::{Span, Spans, Text},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Table, Row, TableState},
+    widgets::{TableState},
     Terminal,
 };
 use crate::cmd::search;
@@ -61,12 +58,12 @@ pub fn execute() -> Result<(), io::Error>{
   let (tx, rx) = mpsc::channel();
 
   // Setup event handlers
-  let mut events = Events::new(tx.clone(), rx);
+  let events = Events::new(tx.clone(), rx);
 
   // Create default app state
   let mut app = App::new(tx);
   app.init();
-  let mut app = Arc::new(Mutex::new(app));
+  let app = Arc::new(Mutex::new(app));
 
   loop {
     terminal.draw(|f| {
@@ -99,7 +96,7 @@ pub fn execute() -> Result<(), io::Error>{
       match events.next().unwrap() {
         Event::Input(input) => {
           match input {
-            Key::Up => {
+            Key::Up | Key::Ctrl('k') => {
               match app.table_state.selected() {
                 None => {
                   if app.bookmarks.len() > 0 {
@@ -113,7 +110,7 @@ pub fn execute() -> Result<(), io::Error>{
                 },
               }
             },
-            Key::Down => {
+            Key::Down | Key::Ctrl('j') => {
               match app.table_state.selected() {
                 None => {
                   if app.bookmarks.len() > 0 {

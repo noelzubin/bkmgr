@@ -46,7 +46,7 @@ impl Events {
     pub fn new(tx: Sender<Event<Key>>, rx: Receiver<Event<Key>>) -> Events {
         let config = Config::default();
         let ignore_exit_key = Arc::new(AtomicBool::new(false));
-        let input_handle = {
+        let _input_handle = {
             let tx = tx.clone();
             let ignore_exit_key = ignore_exit_key.clone();
             thread::spawn(move || {
@@ -64,7 +64,7 @@ impl Events {
                 }
             })
         };
-        let tick_handle = {
+        let _tick_handle = {
             thread::spawn(move || loop {
                 if tx.send(Event::Tick).is_err() {
                     break;

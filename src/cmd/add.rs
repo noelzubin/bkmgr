@@ -13,7 +13,6 @@ pub fn execute(url: String, tags: Option<Vec<String>>) {
     let mut curr_tags: Vec<String> = Vec::new();
 
     if let Some(tags) = tags {
-        println!("here {:?}", &tags);
         for t in tags {
             db.add_tag_for_bookmark(id, &t);
             curr_tags.push(t.to_string());

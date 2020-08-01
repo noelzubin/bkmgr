@@ -1,5 +1,4 @@
 use structopt::StructOpt;
-use log::LevelFilter;
 
 mod db;
 mod bookmark;
@@ -8,29 +7,38 @@ mod utils;
 
 #[derive(Debug, StructOpt)]
 enum Opt {
+    /// Add a new bookmark
     Add {
         url: String,
 
         #[structopt(short, long)]
         tags: Option<Vec<String>>
     },
+
+    /// Delete bookmarks
     Delete {
         id: Vec<i64>
     },
+
+    /// List all bookmarks
     List {
         id: Vec<i64>,
 
         #[structopt(short, long)]
         tags: Option<Vec<String>>
     },
+
+    /// Open bookmark in default browser
     Open { id: Vec<i64> },
+
+    /// Search bookmarks
     Search { keywords: Vec<String> },
+
+    /// Open interactive mode
     Prompt,
 }
 
 fn main() {
-    simple_logging::log_to_file("debug.log", LevelFilter::Info);
-
     let opts = Opt::from_args();
     match opts {
         Opt::Add { url, tags } => cmd::add::execute(url, tags),
@@ -39,6 +47,5 @@ fn main() {
         Opt::Search { keywords} => cmd::search::execute(keywords),
         Opt::Open { id } => cmd::open::execute(id),
         Opt::Prompt => cmd::prompt::execute().unwrap(),
-        _ => {},
     }
 }
