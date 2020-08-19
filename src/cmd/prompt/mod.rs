@@ -14,6 +14,7 @@ use tui::{
     Terminal,
 };
 use crate::cmd::search;
+use crate::cmd::delete;
 
 pub struct App {
   input: String,
@@ -135,6 +136,13 @@ pub fn execute() -> Result<(), io::Error>{
               if let Some(i) = app.table_state.selected() {
                 let url = &app.bookmarks.get(i).unwrap().url;
                 webbrowser::open(&url).unwrap();
+              }
+            },
+            Key::Ctrl('d') => {
+              if let Some(i) = app.table_state.selected() {
+                let ids = vec![app.bookmarks.get(i).unwrap().id];
+                delete::execute(ids);
+                app.bookmarks.remove(i);
               }
             },
             Key::Ctrl('c') => { break },
